@@ -4,22 +4,61 @@
   <meta charset="utf-8" />
   <title>MIDI playlist</title>
   <style>
-    body { font-family: Arial, sans-serif; padding: 16px; }
-    .item { margin-bottom: 10px; }
-    #status { color: red; margin-top: 12px; }
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;           /* vycentrování obsahu */
+      padding: 20px;
+      background-color: #f8f8f8;
+    }
+    h1 {
+      font-size: 2em;
+      margin-bottom: 20px;
+    }
+    table {
+      margin: 0 auto;               /* vycentruje tabulku */
+      border-collapse: collapse;
+      width: 70%;                   /* šířka tabulky */
+      background: white;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    th, td {
+      padding: 12px 8px;
+      border-bottom: 1px solid #ddd;
+      font-size: 1.2em;             /* větší písmo */
+    }
+    tr:hover {
+      background-color: #f1f1f1;
+    }
+    button, a {
+      margin: 0 4px;
+      padding: 6px 12px;
+      font-size: 1em;
+      cursor: pointer;
+    }
+    a {
+      text-decoration: none;
+      color: #0073e6;
+    }
   </style>
 </head>
 <body>
   <h1>MIDI playlist</h1>
-  <div id="playlist">Načítám...</div>
-  <div id="status"></div>
+  <table>
+    <thead>
+      <tr>
+        <th>Název souboru</th>
+        <th>Akce</th>
+      </tr>
+    </thead>
+    <tbody id="playlist"></tbody>
+  </table>
+  <div id="status" style="color:red; margin-top:15px;"></div>
 
   <script>
-    // Adresa knihovny (pokud selže, stáhni soubor do repa a změň na lokální cestu)
+    // URL knihovny midi.js (pokud selže, nahraj lokálně do repa)
     const midiLibUrl = 'https://www.midijs.net/lib/midi.js';
 
-    // Seznam MIDI souborů (v repu na stejném místě jako index.html)
-    // uprav podle svého: 'mid/01_kyrie_alt.mid' pokud jsou ve složce mid
+    // Seznam MIDI souborů
     const midiFiles = [
 '01_Kyrie_tutti.mid',
 '01_Kyrie_alt.mid',
@@ -46,7 +85,6 @@
 '05_Benedictus_alt.mid',
 '05_Benedictus_tenor.mid',
 '05_Benedictus_bass.mid'
-
     ];
 
     const statusEl = document.getElementById('status');
@@ -63,56 +101,49 @@
     }
 
     async function init() {
-      playlistEl.textContent = '';
+      playlistEl.innerHTML = '';
       try {
         await loadScript(midiLibUrl);
       } catch (err) {
-        statusEl.textContent = 'Chyba: nepodařilo se načíst knihovnu midi.js. Zkontroluj URL nebo si stáhni knihovnu lokálně.';
+        statusEl.textContent = 'Chyba: nepodařilo se načíst knihovnu midi.js. Zkontroluj URL nebo si ji nahraj lokálně.';
         console.error(err);
         return;
       }
 
       if (typeof MIDIjs === 'undefined') {
-        statusEl.textContent = 'Knihovna byla načtena, ale MIDIjs není definován (možná se změnil build). Zkus stáhnout midi.js a hostovat lokálně.';
+        statusEl.textContent = 'Knihovna byla načtena, ale MIDIjs není definován.';
         console.error('MIDIjs undefined after load');
         return;
       }
 
-      if (!midiFiles.length) {
-        playlistEl.textContent = 'Žádné MIDI soubory v seznamu. Uprav pole midiFiles v index.html.';
-        return;
-      }
-
       midiFiles.forEach(file => {
-        const div = document.createElement('div');
-        div.className = 'item';
+        const tr = document.createElement('tr');
 
-        const name = document.createElement('span');
-        name.textContent = file + ' ';
+        const nameTd = document.createElement('td');
+        nameTd.textContent = file;
+
+        const actionTd = document.createElement('td');
 
         const playBtn = document.createElement('button');
         playBtn.textContent = 'Přehrát';
-        playBtn.onclick = () => {
-          const url = encodeURI(file);
-          // před přehráním si můžeš zkusit otestovat dostupnost přes fetch() -> ale GitHub Pages to servíruje
-          MIDIjs.play(url);
-        };
+        playBtn.onclick = () => MIDIjs.play(encodeURI(file));
 
         const stopBtn = document.createElement('button');
         stopBtn.textContent = 'Stop';
-        stopBtn.onclick = () => { MIDIjs.stop(); };
+        stopBtn.onclick = () => MIDIjs.stop();
 
         const dl = document.createElement('a');
         dl.href = encodeURI(file);
-        dl.textContent = ' Stáhnout';
-        dl.style.marginLeft = '8px';
+        dl.textContent = 'Stáhnout';
         dl.target = '_blank';
 
-        div.appendChild(name);
-        div.appendChild(playBtn);
-        div.appendChild(stopBtn);
-        div.appendChild(dl);
-        playlistEl.appendChild(div);
+        actionTd.appendChild(playBtn);
+        actionTd.appendChild(stopBtn);
+        actionTd.appendChild(dl);
+
+        tr.appendChild(nameTd);
+        tr.appendChild(actionTd);
+        playlistEl.appendChild(tr);
       });
     }
 
@@ -120,5 +151,3 @@
   </script>
 </body>
 </html>
-
-
