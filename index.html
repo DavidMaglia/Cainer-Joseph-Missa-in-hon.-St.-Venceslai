@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>MIDI playlist</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 16px; }
+    .item { margin-bottom: 10px; }
+    #status { color: red; margin-top: 12px; }
+  </style>
+</head>
+<body>
+  <h1>MIDI playlist</h1>
+  <div id="playlist">Načítám...</div>
+  <div id="status"></div>
+
+  <script>
+    // Adresa knihovny (pokud selže, stáhni soubor do repa a změň na lokální cestu)
+    const midiLibUrl = 'https://www.midijs.net/lib/midi.js';
+
+    // Seznam MIDI souborů (v repu na stejném místě jako index.html)
+    // uprav podle svého: 'mid/01_kyrie_alt.mid' pokud jsou ve složce mid
+    const midiFiles = [
+'01_Kyrie_tutti.mid',
+'01_Kyrie_alt.mid',
+'01_Kyrie_sopran.mid',
+'01_Kyrie_tenor.mid',
+'01_Kyrie_bass.mid',
+'02_Gloria_tutti.mid',
+'02_Gloria_sopran.mid',
+'02_Gloria_alt.mid',
+'02_Gloria_tenor.mid',
+'02_Gloria_bass.mid',
+'03_Credo_tutti.mid',
+'03_Credo_sopran.mid',
+'03_Credo_alt.mid',
+'03_Credo_tenor.mid',
+'03_Credo_bass.mid',
+'04_Sanctus_tutti.mid',
+'04_Sanctus_sopran.mid',
+'04_Sanctus_alt.mid',
+'04_Sanctus_tenor.mid',
+'04_Sanctus_bass.mid',
+'05_Benedictus_tutti.mid',
+'05_Benedictus_sopran.mid',
+'05_Benedictus_alt.mid',
+'05_Benedictus_tenor.mid',
+'05_Benedictus_bass.mid'
+
+    ];
+
+    const statusEl = document.getElementById('status');
+    const playlistEl = document.getElementById('playlist');
+
+    function loadScript(url) {
+      return new Promise((resolve, reject) => {
+        const s = document.createElement('script');
+        s.src = url;
+        s.onload = () => resolve();
+        s.onerror = () => reject(new Error('Nelze načíst skript: ' + url));
+        document.head.appendChild(s);
+      });
+    }
+
+    async function init() {
+      playlistEl.textContent = '';
+      try {
+        await loadScript(midiLibUrl);
+      } catch (err) {
+        statusEl.textContent = 'Chyba: nepodařilo se načíst knihovnu midi.js. Zkontroluj URL nebo si stáhni knihovnu lokálně.';
+        console.error(err);
+        return;
+      }
+
+      if (typeof MIDIjs === 'undefined') {
+        statusEl.textContent = 'Knihovna byla načtena, ale MIDIjs není definován (možná se změnil build). Zkus stáhnout midi.js a hostovat lokálně.';
+        console.error('MIDIjs undefined after load');
+        return;
+      }
+
+      if (!midiFiles.length) {
+        playlistEl.textContent = 'Žádné MIDI soubory v seznamu. Uprav pole midiFiles v index.html.';
+        return;
+      }
+
+      midiFiles.forEach(file => {
+        const div = document.createElement('div');
+        div.className = 'item';
+
+        const name = document.createElement('span');
+        name.textContent = file + ' ';
+
+        const playBtn = document.createElement('button');
+        playBtn.textContent = 'Přehrát';
+        playBtn.onclick = () => {
+          const url = encodeURI(file);
+          // před přehráním si můžeš zkusit otestovat dostupnost přes fetch() -> ale GitHub Pages to servíruje
+          MIDIjs.play(url);
+        };
+
+        const stopBtn = document.createElement('button');
+        stopBtn.textContent = 'Stop';
+        stopBtn.onclick = () => { MIDIjs.stop(); };
+
+        const dl = document.createElement('a');
+        dl.href = encodeURI(file);
+        dl.textContent = ' Stáhnout';
+        dl.style.marginLeft = '8px';
+        dl.target = '_blank';
+
+        div.appendChild(name);
+        div.appendChild(playBtn);
+        div.appendChild(stopBtn);
+        div.appendChild(dl);
+        playlistEl.appendChild(div);
+      });
+    }
+
+    init();
+  </script>
+</body>
+</html>
+
+
